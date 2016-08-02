@@ -17,10 +17,16 @@ import io.fabric.sdk.android.Fabric;
 
 import com.crashlytics.android.answers.Answers;
 import com.crashlytics.android.answers.LoginEvent;
+import com.facebook.AccessToken;
+import com.facebook.AccessTokenTracker;
 import com.facebook.CallbackManager;
 import com.facebook.FacebookCallback;
 import com.facebook.FacebookException;
 import com.facebook.FacebookSdk;
+import com.facebook.GraphRequest;
+import com.facebook.GraphResponse;
+import com.facebook.Profile;
+import com.facebook.ProfileTracker;
 import com.facebook.appevents.AppEventsLogger;
 import com.facebook.login.LoginResult;
 import com.facebook.login.widget.LoginButton;
@@ -37,12 +43,16 @@ import com.twitter.sdk.android.core.identity.TwitterLoginButton;
 import com.twitter.sdk.android.core.models.User;
 
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 
@@ -63,6 +73,8 @@ public class LoginActivity extends AppCompatActivity {
 
     SharedPreferences preferences;
     SharedPreferences.Editor editor;
+
+    JSONObject fFeed = new JSONObject();
 
 
     @Override
@@ -113,29 +125,94 @@ public class LoginActivity extends AppCompatActivity {
 
     private void setupFacebookLogin() {
         fLoginBtn = (LoginButton) findViewById(R.id.login_button);
-        fLoginBtn.setReadPermissions("email");
+        fLoginBtn.setReadPermissions(Arrays.asList("email", "user_posts"));
+        Intent intent = new Intent(LoginActivity.this, LandingActivity.class);
         fLoginBtn.registerCallback(callbackManager, new FacebookCallback<LoginResult>() {
+
+            private AccessTokenTracker mAccessTokenTracker;
 
             @Override
             public void onSuccess(LoginResult loginResult) {
-                Intent intent = new Intent(LoginActivity.this, LandingActivity.class);
+                final JSONObject[] json = {new JSONObject()};
+
                 editor = preferences.edit();
                 editor.putString("fb_access_token", loginResult.getAccessToken().getToken());
                 editor.putLong("fb_access_expires", loginResult.getAccessToken().getExpires().getTime());
+
+                if (AccessToken.getCurrentAccessToken() != null) {
+                    mAccessTokenTracker = new AccessTokenTracker() {
+                        @Override
+                        protected void onCurrentAccessTokenChanged(AccessToken oldAccessToken, AccessToken currentAccessToken) {
+                            mAccessTokenTracker.stopTracking();
+                            if (currentAccessToken == null) {
+                                Log.d("Access Token", "Current Access Token is null, the user has denied access");
+                                Intent invalidAccessTokenIntent = new Intent(LoginActivity.this, LoginActivity.class);
+                                startActivity(invalidAccessTokenIntent);
+                            }
+                            else {
+                                //getProfile();
+                                GraphRequest request = GraphRequest.newMeRequest(
+                                        AccessToken.getCurrentAccessToken(),
+                                        new GraphRequest.GraphJSONObjectCallback() {
+                                            @Override
+                                            public void onCompleted(JSONObject object, GraphResponse response) {
+                                                //Log.d("fetched info", object.toString());
+                                                json[0] = object;
+                                                editor.putString("fb_feed_data", object.toString());
+                                                Log.d("feed", fFeed.toString());
+                                                Log.d("object", object.toString());
+                                            }
+                                        }
+                                );
+                                Bundle params = new Bundle();
+                                params.putString("fields", "feed");
+                                request.setParameters(params);
+                                request.executeAsync();
+                            }
+                        }
+                    };
+                    mAccessTokenTracker. startTracking();
+                    AccessToken.refreshCurrentAccessTokenAsync();
+                }
+                Log.d("fb_feed_data", json[0].toString());
+
+                //editor.putString("fb_feed_data", json[0].toString());
                 editor.apply();
-                startActivity(intent);
+
             }
 
             @Override
             public void onCancel() {
+                Log.d("Facebook Login", "Cancelled");
 
             }
 
             @Override
             public void onError(FacebookException error) {
-
+                Log.d("Facebook Login", "Error: " + error);
+                Toast.makeText(getApplicationContext(), "Failed to login, check your account", Toast.LENGTH_SHORT).show();
             }
         });
+        startActivity(intent);
+    }
+
+    private void getProfile() {
+        GraphRequest request = GraphRequest.newMeRequest(
+                AccessToken.getCurrentAccessToken(),
+                new GraphRequest.GraphJSONObjectCallback() {
+                    @Override
+                    public void onCompleted(JSONObject object, GraphResponse response) {
+                        //Log.d("fetched info", object.toString());
+                        fFeed = object;
+                        Log.d("feed", fFeed.toString());
+                        Log.d("object", object.toString());
+                    }
+                }
+        );
+        Bundle params = new Bundle();
+        params.putString("fields", "feed");
+        request.setParameters(params);
+        request.executeAsync();
     }
 
     @Override
@@ -152,6 +229,7 @@ public class LoginActivity extends AppCompatActivity {
             Log.d("Success", "Twitter login has been successful by: " + result.data.getUserName());
             // redirect to the new activity
             Intent intent = new Intent(LoginActivity.this, LandingActivity.class);
+
             startActivity(intent);
         }
 
