@@ -93,6 +93,9 @@ public class LandingActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     *
+     */
     private class FetchFBFeed extends AsyncTask<AccessToken, Void, JSONObject> {
 
         @Override
