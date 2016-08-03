@@ -22,6 +22,8 @@ import com.twitter.sdk.android.core.TwitterException;
 import com.twitter.sdk.android.core.TwitterSession;
 import com.twitter.sdk.android.core.models.Tweet;
 
+import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
@@ -39,7 +41,7 @@ public class LandingActivity extends AppCompatActivity {
 
     private String fID;
     private String fToken;
-    private JSONObject feed = new JSONObject();
+    private JSONArray fbFeed;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -47,26 +49,19 @@ public class LandingActivity extends AppCompatActivity {
         setContentView(R.layout.activity_landing_activitiy);
 
         // it's a singleton so you're able to access the active session
-        twitterSession = Twitter.getSessionManager().getActiveSession();
-        tUsername = twitterSession.getUserName();
-        tID = twitterSession.getUserId();
-
-        preferences = PreferenceManager.getDefaultSharedPreferences(this);
-        fToken = preferences.getString("fb_access_token", null);
-        fID = preferences.getString("user_id", null);
-
-
-        collectTweets();
-        AccessToken token = getIntent().getExtras().getParcelable("access_token");
-        JSONObject json = new JSONObject();
-        try {
-            json = new FetchFBFeed().execute(token).get();
-        } catch (InterruptedException | ExecutionException e) {
-            e.printStackTrace();
+        if (getIntent().getStringExtra("login_method").equals("twitter")) {
+            twitterSession = Twitter.getSessionManager().getActiveSession();
+            tUsername = twitterSession.getUserName();
+            tID = twitterSession.getUserId();
+            collectTweets();
         }
-
-
-        //Log.d("fetched_info_2", feed.toString());
+        else {
+            preferences = PreferenceManager.getDefaultSharedPreferences(this);
+            fToken = preferences.getString("fb_access_token", null);
+            fID = preferences.getString("user_id", null);
+            fbFeed = new JSONArray();
+            handleFB();
+        }
     }
 
     private void collectTweets() {
@@ -85,6 +80,17 @@ public class LandingActivity extends AppCompatActivity {
                                 Log.d("Tweet Fetching Excep", "Exception: " + exception);
                             }
                         });
+    }
+
+    private void handleFB() {
+        AccessToken token = getIntent().getExtras().getParcelable("access_token");
+        JSONObject returnedJson;
+        try {
+            returnedJson = new FetchFBFeed().execute(token).get();
+            fbFeed = returnedJson.getJSONObject("feed").getJSONArray("data");
+        } catch (InterruptedException | ExecutionException | JSONException e) {
+            e.printStackTrace();
+        }
     }
 
     private class FetchFBFeed extends AsyncTask<AccessToken, Void, JSONObject> {
@@ -113,5 +119,9 @@ public class LandingActivity extends AppCompatActivity {
         protected void onPostExecute(JSONObject result) {
             super.onPostExecute(result);
         }
+    }
+
+    private void sendToServer() {
+
     }
 }

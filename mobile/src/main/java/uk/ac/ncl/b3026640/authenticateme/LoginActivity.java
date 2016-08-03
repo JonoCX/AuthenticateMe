@@ -137,26 +137,6 @@ public class LoginActivity extends AppCompatActivity {
                 editor = preferences.edit();
                 editor.putString("fb_access_token", loginResult.getAccessToken().getToken());
                 editor.putLong("fb_access_expires", loginResult.getAccessToken().getExpires().getTime());
-
-//                if (AccessToken.getCurrentAccessToken() != null) {
-//                    mAccessTokenTracker = new AccessTokenTracker() {
-//                        @Override
-//                        protected void onCurrentAccessTokenChanged(AccessToken oldAccessToken, AccessToken currentAccessToken) {
-//                            mAccessTokenTracker.stopTracking();
-//                            if (currentAccessToken == null) {
-//                                Log.d("Access Token", "Current Access Token is null, the user has denied access");
-//                            }
-//                            else {
-//                                getProfile();
-//                            }
-//                        }
-//                    };
-//                    mAccessTokenTracker. startTracking();
-//                    AccessToken.refreshCurrentAccessTokenAsync();
-//                }
-//                Log.d("fb_feed_data", json[0].toString());
-
-                //editor.putString("fb_feed_data", json[0].toString());
                 intent.putExtra("access_token", loginResult.getAccessToken());
                 editor.apply();
                 startActivity(intent);
@@ -177,24 +157,6 @@ public class LoginActivity extends AppCompatActivity {
 
     }
 
-    private void getProfile() {
-        GraphRequest request = GraphRequest.newMeRequest(
-                AccessToken.getCurrentAccessToken(),
-                new GraphRequest.GraphJSONObjectCallback() {
-                    @Override
-                    public void onCompleted(JSONObject object, GraphResponse response) {
-                        //Log.d("fetched info", object.toString());
-                        fFeed = object;
-                        Log.d("feed", fFeed.toString());
-                        Log.d("object", object.toString());
-                    }
-                }
-        );
-        Bundle params = new Bundle();
-        params.putString("fields", "feed");
-        request.setParameters(params);
-        request.executeAsync();
-    }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -210,13 +172,13 @@ public class LoginActivity extends AppCompatActivity {
             Log.d("Success", "Twitter login has been successful by: " + result.data.getUserName());
             // redirect to the new activity
             Intent intent = new Intent(LoginActivity.this, LandingActivity.class);
-
+            intent.putExtra("login_method", "twitter");
             startActivity(intent);
         }
 
         @Override
         public void failure(TwitterException exception) {
-
+            Log.d("Failure", "Twitter login has failed; " + exception);
         }
     }
 }
