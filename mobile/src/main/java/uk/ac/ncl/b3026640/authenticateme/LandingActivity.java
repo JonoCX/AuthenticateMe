@@ -1,15 +1,19 @@
+/**
+ * @author Jonathan Carlton
+ */
+
 package uk.ac.ncl.b3026640.authenticateme;
 
 import android.content.SharedPreferences;
+import android.os.AsyncTask;
+import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
 import android.util.Log;
 
 import com.facebook.AccessToken;
 import com.facebook.GraphRequest;
 import com.facebook.GraphResponse;
-import com.facebook.HttpMethod;
 import com.twitter.sdk.android.Twitter;
 import com.twitter.sdk.android.core.Callback;
 import com.twitter.sdk.android.core.Result;
@@ -18,11 +22,11 @@ import com.twitter.sdk.android.core.TwitterException;
 import com.twitter.sdk.android.core.TwitterSession;
 import com.twitter.sdk.android.core.models.Tweet;
 
-import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 public class LandingActivity extends AppCompatActivity {
 
@@ -51,10 +55,18 @@ public class LandingActivity extends AppCompatActivity {
         fToken = preferences.getString("fb_access_token", null);
         fID = preferences.getString("user_id", null);
 
-        collectTweets();
-        collectFBFeed();
 
-        Log.d("fetched_info_2", feed.toString());
+        collectTweets();
+        AccessToken token = getIntent().getExtras().getParcelable("access_token");
+        JSONObject json = new JSONObject();
+        try {
+            json = new FetchFBFeed().execute(token).get();
+        } catch (InterruptedException | ExecutionException e) {
+            e.printStackTrace();
+        }
+
+
+        //Log.d("fetched_info_2", feed.toString());
     }
 
     private void collectTweets() {
@@ -75,12 +87,31 @@ public class LandingActivity extends AppCompatActivity {
                         });
     }
 
-    private void collectFBFeed() {
-        String sFeed = preferences.getString("fb_feed_data", null);
-        try {
-            feed = new JSONObject(sFeed);
-        } catch (JSONException e) {
-            e.printStackTrace();
+    private class FetchFBFeed extends AsyncTask<AccessToken, Void, JSONObject> {
+
+        @Override
+        protected JSONObject doInBackground(AccessToken... accessTokens) {
+            final JSONObject[] json = {new JSONObject()};
+            AccessToken accessToken = accessTokens[0];
+            GraphRequest request = GraphRequest.newMeRequest(
+                    accessToken,
+                    new GraphRequest.GraphJSONObjectCallback() {
+                        @Override
+                        public void onCompleted(JSONObject object, GraphResponse response) {
+                            json[0] = object;
+                        }
+                    }
+            );
+            Bundle params = new Bundle();
+            params.putString("fields", "feed");
+            request.setParameters(params);
+            request.executeAndWait();
+            return json[0];
+        }
+
+        @Override
+        protected void onPostExecute(JSONObject result) {
+            super.onPostExecute(result);
         }
     }
 }

@@ -126,59 +126,40 @@ public class LoginActivity extends AppCompatActivity {
     private void setupFacebookLogin() {
         fLoginBtn = (LoginButton) findViewById(R.id.login_button);
         fLoginBtn.setReadPermissions(Arrays.asList("email", "user_posts"));
-        Intent intent = new Intent(LoginActivity.this, LandingActivity.class);
+
         fLoginBtn.registerCallback(callbackManager, new FacebookCallback<LoginResult>() {
 
             private AccessTokenTracker mAccessTokenTracker;
 
             @Override
             public void onSuccess(LoginResult loginResult) {
-                final JSONObject[] json = {new JSONObject()};
-
+                Intent intent = new Intent(LoginActivity.this, LandingActivity.class);
                 editor = preferences.edit();
                 editor.putString("fb_access_token", loginResult.getAccessToken().getToken());
                 editor.putLong("fb_access_expires", loginResult.getAccessToken().getExpires().getTime());
 
-                if (AccessToken.getCurrentAccessToken() != null) {
-                    mAccessTokenTracker = new AccessTokenTracker() {
-                        @Override
-                        protected void onCurrentAccessTokenChanged(AccessToken oldAccessToken, AccessToken currentAccessToken) {
-                            mAccessTokenTracker.stopTracking();
-                            if (currentAccessToken == null) {
-                                Log.d("Access Token", "Current Access Token is null, the user has denied access");
-                                Intent invalidAccessTokenIntent = new Intent(LoginActivity.this, LoginActivity.class);
-                                startActivity(invalidAccessTokenIntent);
-                            }
-                            else {
-                                //getProfile();
-                                GraphRequest request = GraphRequest.newMeRequest(
-                                        AccessToken.getCurrentAccessToken(),
-                                        new GraphRequest.GraphJSONObjectCallback() {
-                                            @Override
-                                            public void onCompleted(JSONObject object, GraphResponse response) {
-                                                //Log.d("fetched info", object.toString());
-                                                json[0] = object;
-                                                editor.putString("fb_feed_data", object.toString());
-                                                Log.d("feed", fFeed.toString());
-                                                Log.d("object", object.toString());
-                                            }
-                                        }
-                                );
-                                Bundle params = new Bundle();
-                                params.putString("fields", "feed");
-                                request.setParameters(params);
-                                request.executeAsync();
-                            }
-                        }
-                    };
-                    mAccessTokenTracker. startTracking();
-                    AccessToken.refreshCurrentAccessTokenAsync();
-                }
-                Log.d("fb_feed_data", json[0].toString());
+//                if (AccessToken.getCurrentAccessToken() != null) {
+//                    mAccessTokenTracker = new AccessTokenTracker() {
+//                        @Override
+//                        protected void onCurrentAccessTokenChanged(AccessToken oldAccessToken, AccessToken currentAccessToken) {
+//                            mAccessTokenTracker.stopTracking();
+//                            if (currentAccessToken == null) {
+//                                Log.d("Access Token", "Current Access Token is null, the user has denied access");
+//                            }
+//                            else {
+//                                getProfile();
+//                            }
+//                        }
+//                    };
+//                    mAccessTokenTracker. startTracking();
+//                    AccessToken.refreshCurrentAccessTokenAsync();
+//                }
+//                Log.d("fb_feed_data", json[0].toString());
 
                 //editor.putString("fb_feed_data", json[0].toString());
+                intent.putExtra("access_token", loginResult.getAccessToken());
                 editor.apply();
-
+                startActivity(intent);
             }
 
             @Override
@@ -193,7 +174,7 @@ public class LoginActivity extends AppCompatActivity {
                 Toast.makeText(getApplicationContext(), "Failed to login, check your account", Toast.LENGTH_SHORT).show();
             }
         });
-        startActivity(intent);
+
     }
 
     private void getProfile() {
