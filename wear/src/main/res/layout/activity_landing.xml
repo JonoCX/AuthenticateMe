@@ -8,4 +8,4 @@
     app:rectLayout="@layout/rect_activity_landing"
     app:roundLayout="@layout/round_activity_landing"
     tools:context="uk.ac.ncl.b3026640.authenticateme.LandingActivity"
-    tools:deviceIds="wear"></android.support.wearable.view.WatchViewStub>
+    tools:deviceIds="wear"/>

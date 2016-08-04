@@ -14,6 +14,12 @@ import android.util.Log;
 import com.facebook.AccessToken;
 import com.facebook.GraphRequest;
 import com.facebook.GraphResponse;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
+import com.google.firebase.remoteconfig.FirebaseRemoteConfigInfo;
 import com.twitter.sdk.android.Twitter;
 import com.twitter.sdk.android.core.Callback;
 import com.twitter.sdk.android.core.Result;
@@ -28,6 +34,7 @@ import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 
 public class LandingActivity extends AppCompatActivity {
@@ -48,12 +55,15 @@ public class LandingActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_landing_activitiy);
 
+        User user;
+
         // it's a singleton so you're able to access the active session
         if (getIntent().getStringExtra("login_method").equals("twitter")) {
             twitterSession = Twitter.getSessionManager().getActiveSession();
             tUsername = twitterSession.getUserName();
             tID = twitterSession.getUserId();
             collectTweets();
+            checkIfUserExists();
         }
         else {
             preferences = PreferenceManager.getDefaultSharedPreferences(this);
@@ -61,7 +71,52 @@ public class LandingActivity extends AppCompatActivity {
             fID = preferences.getString("user_id", null);
             fbFeed = new JSONArray();
             handleFB();
+
         }
+
+
+    }
+
+    private boolean checkIfUserExists() {
+        DatabaseReference mDatabase = FirebaseDatabase.getInstance().getReference("users");
+        User user = new User.Builder("1").build();
+        mDatabase.child("users").child("1").setValue(user);
+        mDatabase.child("users").child("1");
+
+        mDatabase.child("users").child("1").addListenerForSingleValueEvent(
+                new ValueEventListener() {
+                    @Override
+                    public void onDataChange(DataSnapshot dataSnapshot) {
+                        for (DataSnapshot child : dataSnapshot.getChildren()) {
+                            Log.i("it", child.toString());
+                        }
+                    }
+
+                    @Override
+                    public void onCancelled(DatabaseError databaseError) {
+                        Log.w("Cancelled", "getUser:onCanceeled", databaseError.toException());
+                    }
+                }
+        );
+        return false;
+    }
+
+    private void databaseTesting() {
+        FirebaseDatabase database = FirebaseDatabase.getInstance();
+        DatabaseReference ref = database.getReference("message");
+        ref.setValue("Hello, World!");
+        ref.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                String value = dataSnapshot.getValue(String.class);
+                Log.d("Firebase: Data Change", "Value is: " + value);
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+                Log.w("Firebase: Failure", "Failed to read value.", databaseError.toException());
+            }
+        });
     }
 
     private void collectTweets() {
@@ -79,7 +134,8 @@ public class LandingActivity extends AppCompatActivity {
                             public void failure(TwitterException exception) {
                                 Log.d("Tweet Fetching Excep", "Exception: " + exception);
                             }
-                        });
+                        }
+                );
     }
 
     private void handleFB() {
@@ -93,9 +149,6 @@ public class LandingActivity extends AppCompatActivity {
         }
     }
 
-    /**
-     *
-     */
     private class FetchFBFeed extends AsyncTask<AccessToken, Void, JSONObject> {
 
         @Override
@@ -127,4 +180,14 @@ public class LandingActivity extends AppCompatActivity {
     private void sendToServer() {
 
     }
+
+
+    /**
+     * Send a notification to the Pi to say that someone is trying to authenticate
+     * Send the data, social media feeds to the firebase server, pull that onto the
+     *      pi and then classify (handle it if they have previously authenticated.)
+     * If their chatter on social media has drastically changed since the last time
+     *      they authenticated, then it could indicate a potential problem. If so
+     *      ask for further authentication?
+     */
 }

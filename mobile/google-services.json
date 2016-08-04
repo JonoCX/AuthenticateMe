@@ -1,0 +1,42 @@
+{
+  "project_info": {
+    "project_number": "597190656558",
+    "firebase_url": "https://authenticate-me-e0f4c.firebaseio.com",
+    "project_id": "authenticate-me-e0f4c",
+    "storage_bucket": "authenticate-me-e0f4c.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:597190656558:android:16affe4014632853",
+        "android_client_info": {
+          "package_name": "uk.ac.ncl.b3026640.authenticateme"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "597190656558-aeu6figlv7k76gpe4i7fulh403d7550s.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCh6plVHpWhR3zP53wPoZCa8l6Cm-k9EZA"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 1,
+          "other_platform_oauth_client": []
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

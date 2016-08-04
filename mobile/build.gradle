@@ -1,6 +1,7 @@
 apply plugin: 'com.android.application'
 apply plugin: 'io.fabric'
 
+
 repositories {
     mavenCentral()
     maven { url 'https://maven.fabric.io/public' }
@@ -24,6 +25,8 @@ dependencies {
     compile 'com.google.android.gms:play-services-ads:9.4.0'
     compile 'com.google.android.gms:play-services-auth:9.4.0'
     compile 'com.google.android.gms:play-services-gcm:9.4.0'
+    compile 'com.google.firebase:firebase-core:9.4.0'
+    compile 'com.google.firebase:firebase-database:9.2.1'
 }
 
 android {
@@ -44,5 +47,7 @@ android {
         }
     }
 }
+
+apply plugin: 'com.google.gms.google-services'
 
 

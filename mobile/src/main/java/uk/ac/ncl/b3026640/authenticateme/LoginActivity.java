@@ -138,6 +138,7 @@ public class LoginActivity extends AppCompatActivity {
                 editor.putString("fb_access_token", loginResult.getAccessToken().getToken());
                 editor.putLong("fb_access_expires", loginResult.getAccessToken().getExpires().getTime());
                 intent.putExtra("access_token", loginResult.getAccessToken());
+                intent.putExtra("fb_user_id", loginResult.getAccessToken().getUserId());
                 editor.apply();
                 startActivity(intent);
             }
