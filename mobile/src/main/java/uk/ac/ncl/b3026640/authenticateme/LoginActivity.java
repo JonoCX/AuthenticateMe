@@ -174,6 +174,8 @@ public class LoginActivity extends AppCompatActivity {
             // redirect to the new activity
             Intent intent = new Intent(LoginActivity.this, LandingActivity.class);
             intent.putExtra("login_method", "twitter");
+            intent.putExtra("twitter_user_id", result.data.getUserId());
+            intent.putExtra("twitter_screen_name", result.data.getUserName());
             startActivity(intent);
         }
 

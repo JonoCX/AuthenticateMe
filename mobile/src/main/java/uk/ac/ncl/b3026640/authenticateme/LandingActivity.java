@@ -4,6 +4,7 @@
 
 package uk.ac.ncl.b3026640.authenticateme;
 
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -50,6 +51,8 @@ public class LandingActivity extends AppCompatActivity {
     private String fToken;
     private JSONArray fbFeed;
 
+    private ArrayList<String> feed = new ArrayList<>();
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -63,7 +66,8 @@ public class LandingActivity extends AppCompatActivity {
             tUsername = twitterSession.getUserName();
             tID = twitterSession.getUserId();
             collectTweets();
-            checkIfUserExists();
+
+            //checkIfUserExists();
         }
         else {
             preferences = PreferenceManager.getDefaultSharedPreferences(this);
@@ -126,8 +130,11 @@ public class LandingActivity extends AppCompatActivity {
                             @Override
                             public void success(Result<List<Tweet>> result) {
                                 for (Tweet t : result.data) {
-                                    tweets.add(t);
+                                    //Log.i("single tweet", t.text);
+                                    //tweets.add(t);
+                                    feed.add(t.text);
                                 }
+                                Log.d("Feed", feed.toString());
                             }
 
                             @Override
@@ -136,6 +143,11 @@ public class LandingActivity extends AppCompatActivity {
                             }
                         }
                 );
+
+
+        // convert into a string list
+        List<String> list = new ArrayList<>();
+
     }
 
     private void handleFB() {
@@ -176,6 +188,17 @@ public class LandingActivity extends AppCompatActivity {
             super.onPostExecute(result);
         }
     }
+
+    public void buildFeed() {
+        Intent intent = getIntent();
+        if (intent.getStringExtra("login_method").equals("twitter")) {
+            long tID = intent.getLongExtra("twitter_user_id", 1L);
+        } else {
+
+        }
+    }
+
+
 
     private void sendToServer() {
 
