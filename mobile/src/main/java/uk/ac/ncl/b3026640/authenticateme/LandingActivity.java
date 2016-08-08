@@ -28,6 +28,7 @@ import com.twitter.sdk.android.core.TwitterCore;
 import com.twitter.sdk.android.core.TwitterException;
 import com.twitter.sdk.android.core.TwitterSession;
 import com.twitter.sdk.android.core.models.Tweet;
+import com.twitter.sdk.android.tweetui.UserTimeline;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -37,6 +38,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 public class LandingActivity extends AppCompatActivity {
 
@@ -60,16 +63,16 @@ public class LandingActivity extends AppCompatActivity {
 
         User user;
 
-        // it's a singleton so you're able to access the active session
-        if (getIntent().getStringExtra("login_method").equals("twitter")) {
+        Intent intent = getIntent();
+        if (getIntent().hasExtra("login_method")) {
             twitterSession = Twitter.getSessionManager().getActiveSession();
             tUsername = twitterSession.getUserName();
             tID = twitterSession.getUserId();
-            collectTweets();
-
-            //checkIfUserExists();
-        }
-        else {
+            //collectTweets();
+            List<String> res = getIntent().getStringArrayListExtra("twitter_feed");
+            for (String s : res)
+                Log.i("feed passed!", s);
+        } else {
             preferences = PreferenceManager.getDefaultSharedPreferences(this);
             fToken = preferences.getString("fb_access_token", null);
             fID = preferences.getString("user_id", null);
@@ -124,7 +127,7 @@ public class LandingActivity extends AppCompatActivity {
     }
 
     private void collectTweets() {
-        TwitterCore.getInstance().getApiClient(twitterSession).getStatusesService()
+        /*TwitterCore.getInstance().getApiClient(twitterSession).getStatusesService()
                 .userTimeline(tID, tUsername, 20, null, null, null, null, null, null,
                         new Callback<List<Tweet>>() {
                             @Override
@@ -146,7 +149,15 @@ public class LandingActivity extends AppCompatActivity {
 
 
         // convert into a string list
-        List<String> list = new ArrayList<>();
+        List<String> list = new ArrayList<>();*/
+        List<String> result;
+        try {
+            result = new FetchTwitterFeed().execute(twitterSession).get(10, TimeUnit.SECONDS);
+            for (String s : result)
+                Log.i("loop", s);
+        } catch (InterruptedException | ExecutionException | TimeoutException e) {
+            e.printStackTrace();
+        }
 
     }
 
@@ -184,9 +195,41 @@ public class LandingActivity extends AppCompatActivity {
         }
 
         @Override
-        protected void onPostExecute(JSONObject result) {
-            super.onPostExecute(result);
+        protected void onPostExecute(JSONObject result) { super.onPostExecute(result); }
+    }
+
+    private class FetchTwitterFeed extends AsyncTask<TwitterSession, Void, List<String>> {
+
+        List<String> result = new ArrayList<>();
+
+        @Override
+        protected List<String> doInBackground(TwitterSession... session) {
+            //List<String> result = new ArrayList<>();
+            TwitterSession twitterSession = session[0];
+            TwitterCore.getInstance().getApiClient(twitterSession).getStatusesService()
+                    .userTimeline(tID, tUsername, 20, null, null, null, null, null, null,
+                    new Callback<List<Tweet>>() {
+                        @Override
+                        public void success(Result<List<Tweet>> res) {
+                            for (Tweet t : res.data) {
+                                Log.i("inner", t.text);
+                                result.add(t.text);
+                            }
+                        }
+
+                        @Override
+                        public void failure(TwitterException exception) {
+                            Log.e("User timeline failure", "Exception: " + exception);
+                        }
+                    });
+
+
+
+            return result;
         }
+
+        @Override
+        protected void onPostExecute(List<String> result) { super.onPostExecute(result); }
     }
 
     public void buildFeed() {

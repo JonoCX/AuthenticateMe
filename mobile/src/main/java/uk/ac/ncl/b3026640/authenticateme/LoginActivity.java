@@ -5,6 +5,7 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.Signature;
+import android.os.AsyncTask;
 import android.preference.PreferenceManager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -28,6 +29,7 @@ import com.facebook.GraphResponse;
 import com.facebook.Profile;
 import com.facebook.ProfileTracker;
 import com.facebook.appevents.AppEventsLogger;
+import com.facebook.login.LoginManager;
 import com.facebook.login.LoginResult;
 import com.facebook.login.widget.LoginButton;
 
@@ -40,6 +42,7 @@ import com.crashlytics.android.Crashlytics;
 import com.twitter.sdk.android.core.TwitterException;
 import com.twitter.sdk.android.core.TwitterSession;
 import com.twitter.sdk.android.core.identity.TwitterLoginButton;
+import com.twitter.sdk.android.core.models.Tweet;
 import com.twitter.sdk.android.core.models.User;
 
 
@@ -81,12 +84,17 @@ public class LoginActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+
+
         // Twitter
         TwitterAuthConfig authConfig = new TwitterAuthConfig(TWITTER_KEY, TWITTER_SECRET);
         Fabric.with(this, new Twitter(authConfig));
 
         // Facebook
         FacebookSdk.sdkInitialize(getApplicationContext());
+        if (isLoggedIn()) {
+            LoginManager.getInstance().logOut();
+        }
         AppEventsLogger.activateApp(this);
         callbackManager = CallbackManager.Factory.create();
 
@@ -113,6 +121,11 @@ public class LoginActivity extends AppCompatActivity {
         }*/
     }
 
+    public boolean isLoggedIn() {
+        AccessToken accessToken = AccessToken.getCurrentAccessToken();
+        return accessToken != null;
+    }
+
     private void setupViews() {
         setupTwitterLogin();
         setupFacebookLogin();
@@ -121,6 +134,7 @@ public class LoginActivity extends AppCompatActivity {
     private void setupTwitterLogin() {
         tLoginBtn = (TwitterLoginButton) findViewById(R.id.login_button_twitter);
         tLoginBtn.setCallback(new LoginHandler());
+        // try here instead
     }
 
     private void setupFacebookLogin() {
@@ -168,6 +182,8 @@ public class LoginActivity extends AppCompatActivity {
 
     private class LoginHandler extends Callback<TwitterSession> {
 
+        ArrayList<String> feed = new ArrayList<>();
+
         @Override
         public void success(Result<TwitterSession> result) {
             Log.d("Success", "Twitter login has been successful by: " + result.data.getUserName());
@@ -176,12 +192,67 @@ public class LoginActivity extends AppCompatActivity {
             intent.putExtra("login_method", "twitter");
             intent.putExtra("twitter_user_id", result.data.getUserId());
             intent.putExtra("twitter_screen_name", result.data.getUserName());
+
+            TwitterCore.getInstance().getApiClient(result.data).getStatusesService()
+                    .userTimeline(result.data.getUserId(), result.data.getUserName(), 20,
+                            null, null, null, null, null, null,
+                            new Callback<List<Tweet>>() {
+                                @Override
+                                public void success(Result<List<Tweet>> result) {
+                                    for (Tweet t : result.data)
+                                        feed.add(t.text);
+                                }
+
+                                @Override
+                                public void failure(TwitterException exception) {
+                                    Log.e("User timeline failure", "Exception: " + exception);
+                                }
+                            });
+            intent.putStringArrayListExtra("twitter_feed", feed);
+
             startActivity(intent);
+            //new LaunchAsTwitter().execute(result.data);
         }
 
         @Override
         public void failure(TwitterException exception) {
             Log.d("Failure", "Twitter login has failed; " + exception);
+        }
+    }
+
+    private class LaunchAsTwitter extends AsyncTask<TwitterSession, Void, ArrayList<String>> {
+
+        ArrayList<String> feed = new ArrayList<>();
+
+        @Override
+        protected ArrayList<String> doInBackground(TwitterSession... twitterSessions) {
+            TwitterSession twitterSession = twitterSessions[0];
+            TwitterCore.getInstance().getApiClient(twitterSession).getStatusesService()
+                    .userTimeline(twitterSession.getUserId(), twitterSession.getUserName(), 20,
+                            null, null, null, null, null, null,
+                            new Callback<List<Tweet>>() {
+                                @Override
+                                public void success(Result<List<Tweet>> result) {
+                                    for (Tweet t : result.data)
+                                        feed.add(t.text);
+                                }
+
+                                @Override
+                                public void failure(TwitterException exception) {
+                                    Log.e("User timeline failure", "Exception: " + exception);
+                                }
+                            });
+            return feed;
+        }
+
+        @Override
+        protected void onPostExecute(ArrayList<String> result) {
+            super.onPostExecute(result);
+            Intent intent = new Intent(LoginActivity.this, LandingActivity.class);
+            intent.putExtra("twitter_feed", feed.toArray());
+            intent.putStringArrayListExtra("twitter_feed", feed);
+            intent.putExtra("login_method", "twitter");
+            startActivity(intent);
         }
     }
 }
