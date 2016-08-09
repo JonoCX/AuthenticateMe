@@ -29,8 +29,11 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+
 import java.util.ArrayList;
 import java.util.concurrent.ExecutionException;
+
+import uk.ac.ncl.b3026640.authenticateme.misc.TopicDetection;
 
 
 public class LandingActivity extends AppCompatActivity {
@@ -56,12 +59,24 @@ public class LandingActivity extends AppCompatActivity {
             twitterSession = Twitter.getSessionManager().getActiveSession();
             tUsername = twitterSession.getUserName();
             tID = twitterSession.getUserId();
+            feed = getIntent().getStringArrayListExtra("twitter_feed");
+            processFeed();
         } else {
             preferences = PreferenceManager.getDefaultSharedPreferences(this);
             fToken = preferences.getString("fb_access_token", null);
             fID = preferences.getString("user_id", null);
             handleFB();
         }
+        //processFeed();
+    }
+
+    private void processFeed() {
+        TopicDetection detection = new TopicDetection(getResources().getString(R.string.monkey_learn_api_key));
+        Log.i("Feed", feed.toString());
+        String[] arr = feed.toArray(new String[0]);
+        org.json.simple.JSONArray result = detection.detectTopics(arr);
+
+        Log.i("result", result.toJSONString());
     }
 
     private boolean checkIfUserExists() {
