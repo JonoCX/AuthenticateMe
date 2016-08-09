@@ -2,4 +2,5 @@
     <string name="app_name">Authenticate Me</string>
     <string name="twitter_login_failure">Login Failed</string>
     <string name="facebook_app_id">1751771895108816</string>
+    <string name="monkey_learn_api_key">d1244a0d6b9245527414635c362a306f08629e6b</string>
 </resources>

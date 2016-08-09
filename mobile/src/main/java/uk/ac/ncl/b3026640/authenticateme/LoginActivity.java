@@ -144,10 +144,10 @@ public class LoginActivity extends AppCompatActivity {
         fLoginBtn.registerCallback(callbackManager, new FacebookCallback<LoginResult>() {
 
             private AccessTokenTracker mAccessTokenTracker;
+            Intent intent = new Intent(LoginActivity.this, LandingActivity.class);
 
             @Override
             public void onSuccess(LoginResult loginResult) {
-                Intent intent = new Intent(LoginActivity.this, LandingActivity.class);
                 editor = preferences.edit();
                 editor.putString("fb_access_token", loginResult.getAccessToken().getToken());
                 editor.putLong("fb_access_expires", loginResult.getAccessToken().getExpires().getTime());
@@ -180,15 +180,17 @@ public class LoginActivity extends AppCompatActivity {
         callbackManager.onActivityResult(requestCode, resultCode, data);
     }
 
+    /**
+     *
+     */
     private class LoginHandler extends Callback<TwitterSession> {
 
         ArrayList<String> feed = new ArrayList<>();
+        Intent intent = new Intent(LoginActivity.this, LandingActivity.class);
 
         @Override
         public void success(Result<TwitterSession> result) {
             Log.d("Success", "Twitter login has been successful by: " + result.data.getUserName());
-            // redirect to the new activity
-            Intent intent = new Intent(LoginActivity.this, LandingActivity.class);
             intent.putExtra("login_method", "twitter");
             intent.putExtra("twitter_user_id", result.data.getUserId());
             intent.putExtra("twitter_screen_name", result.data.getUserName());
@@ -201,6 +203,9 @@ public class LoginActivity extends AppCompatActivity {
                                 public void success(Result<List<Tweet>> result) {
                                     for (Tweet t : result.data)
                                         feed.add(t.text);
+
+                                    intent.putStringArrayListExtra("twitter_feed", feed);
+                                    startActivity(intent);
                                 }
 
                                 @Override
@@ -208,51 +213,11 @@ public class LoginActivity extends AppCompatActivity {
                                     Log.e("User timeline failure", "Exception: " + exception);
                                 }
                             });
-            intent.putStringArrayListExtra("twitter_feed", feed);
-
-            startActivity(intent);
-            //new LaunchAsTwitter().execute(result.data);
         }
 
         @Override
         public void failure(TwitterException exception) {
             Log.d("Failure", "Twitter login has failed; " + exception);
-        }
-    }
-
-    private class LaunchAsTwitter extends AsyncTask<TwitterSession, Void, ArrayList<String>> {
-
-        ArrayList<String> feed = new ArrayList<>();
-
-        @Override
-        protected ArrayList<String> doInBackground(TwitterSession... twitterSessions) {
-            TwitterSession twitterSession = twitterSessions[0];
-            TwitterCore.getInstance().getApiClient(twitterSession).getStatusesService()
-                    .userTimeline(twitterSession.getUserId(), twitterSession.getUserName(), 20,
-                            null, null, null, null, null, null,
-                            new Callback<List<Tweet>>() {
-                                @Override
-                                public void success(Result<List<Tweet>> result) {
-                                    for (Tweet t : result.data)
-                                        feed.add(t.text);
-                                }
-
-                                @Override
-                                public void failure(TwitterException exception) {
-                                    Log.e("User timeline failure", "Exception: " + exception);
-                                }
-                            });
-            return feed;
-        }
-
-        @Override
-        protected void onPostExecute(ArrayList<String> result) {
-            super.onPostExecute(result);
-            Intent intent = new Intent(LoginActivity.this, LandingActivity.class);
-            intent.putExtra("twitter_feed", feed.toArray());
-            intent.putStringArrayListExtra("twitter_feed", feed);
-            intent.putExtra("login_method", "twitter");
-            startActivity(intent);
         }
     }
 }

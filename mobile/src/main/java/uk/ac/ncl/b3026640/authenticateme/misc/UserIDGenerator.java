@@ -1,4 +1,4 @@
-package uk.ac.ncl.b3026640.authenticateme;
+package uk.ac.ncl.b3026640.authenticateme.misc;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;

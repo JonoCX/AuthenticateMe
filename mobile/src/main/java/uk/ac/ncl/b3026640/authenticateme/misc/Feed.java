@@ -1,4 +1,4 @@
-package uk.ac.ncl.b3026640.authenticateme;
+package uk.ac.ncl.b3026640.authenticateme.misc;
 
 import com.google.firebase.database.Exclude;
 import com.google.firebase.database.IgnoreExtraProperties;
