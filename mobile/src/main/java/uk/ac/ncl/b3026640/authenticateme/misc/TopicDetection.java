@@ -8,9 +8,18 @@ import com.monkeylearn.MonkeyLearnException;
 import com.monkeylearn.MonkeyLearnResponse;
 
 import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
 
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.ExecutionException;
+
+import javax.net.ssl.HttpsURLConnection;
 
 import uk.ac.ncl.b3026640.authenticateme.R;
 
@@ -26,6 +35,10 @@ import uk.ac.ncl.b3026640.authenticateme.R;
 
 public class TopicDetection {
 
+    private static final String MONKEY_LEARN_BASE_URL = "https://api.monkeylearn.com/v2/classifiers/cl_5icAVzKR/classify/";
+    private static final String MONKEY_LEARN_TRAIN_URL = "https://api.monkeylearn.com/v2/classifiers/cl_WdTKtSjm/train/";
+
+
     String apiKey;
 
     public TopicDetection(String key) {
@@ -39,55 +52,97 @@ public class TopicDetection {
      * @param textList array of text strings to be classified
      * @return the result of the api call or null
      */
-    public JSONArray detectTopics(String[] textList) {
+    public String detectTopics(String[] textList) throws MonkeyLearnException {
+        String response = "";
         try {
-            new DetectTopics().execute(textList).get();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        } catch (ExecutionException e) {
+            response = new SendPost().execute(Arrays.asList(textList)).get();
+            Log.i("response", response);
+        } catch (Exception e) {
             e.printStackTrace();
         }
-//        try {
-//            MonkeyLearn ml = new MonkeyLearn("d1244a0d6b9245527414635c362a306f08629e6b");
-//            String moduleId = "cl_WdTKtSjm";
-//            String[] text = {"This is a text to test your classifier", "This is some more text"};
-//            MonkeyLearnResponse res = ml.classifiers.classify(moduleId, textList, true);
-//            Log.i("Result", res.arrayResult.toJSONString());
-////            MonkeyLearn monkeyLearn = new MonkeyLearn(apiKey);
-////            Log.i("key", apiKey);
-////            String moduleId = "cl_WdTKtSjm";
-////            Log.i("textList", "" + textList.length);
-////            Log.i("textList", Arrays.toString(textList));
-////            MonkeyLearnResponse response = monkeyLearn.classifiers.classify(moduleId, textList, true);
-////            return response.arrayResult;
-//        } catch (MonkeyLearnException e) {
-//            e.printStackTrace();
-//        }
-        return new JSONArray();
+        return response;
     }
 
-    private class DetectTopics extends AsyncTask<String[], Void, JSONArray> {
 
+
+    private class SendPost extends AsyncTask<List<String>, Void, String> {
 
         @Override
-        protected JSONArray doInBackground(String[]... strings) {
-            MonkeyLearn ml = new MonkeyLearn("d1244a0d6b9245527414635c362a306f08629e6b");
-            String moduleId = "cl_WdTKtSjm";
-            String[] textList = {"This is a text to test your classifier", "This is some more text"};
-            MonkeyLearnResponse res = null;
+        protected String doInBackground(List<String>... strings) {
+            StringBuilder response = new StringBuilder();
             try {
-                res = ml.classifiers.classify(moduleId, textList, true);
-            } catch (MonkeyLearnException e) {
+                URL url = new URL(MONKEY_LEARN_BASE_URL);
+                HttpsURLConnection connection = (HttpsURLConnection) url.openConnection();
+
+                // build request header
+                connection.setRequestMethod("POST");
+                connection.setRequestProperty("Authorization", "Token " + apiKey);
+                connection.setRequestProperty("Content-type", "application/json");
+                connection.setUseCaches(false);
+                connection.setDoInput(true);
+                connection.setDoOutput(false);
+
+                // send the request
+                OutputStreamWriter writer = new OutputStreamWriter(connection.getOutputStream());
+                JSONObject jsonObject = new JSONObject();
+                JSONArray jsonArray = new JSONArray();
+                jsonArray.addAll(strings[0]);
+                jsonObject.put("text_list", jsonArray);
+                Log.i("json-object", jsonObject.toJSONString());
+                writer.write(jsonObject.toJSONString());
+                writer.flush();
+                writer.close();
+
+                Log.i("POST", url.toString());
+                Log.i("Response code", String.valueOf(connection.getResponseCode()));
+
+                // read input stream
+                int code = connection.getResponseCode();
+                BufferedReader input;
+                if (code == 400 || code == 500)
+                    input = new BufferedReader(new InputStreamReader(connection.getErrorStream()));
+                else
+                    input = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+                String inputLine;
+
+                while ((inputLine = input.readLine()) != null)
+                    response.append(inputLine);
+                input.close();
+            } catch (Exception e) {
                 e.printStackTrace();
             }
-            Log.i("Result", res.arrayResult.toJSONString());
-            return null;
+
+            return response.toString();
         }
 
         @Override
-        protected void onPostExecute(JSONArray jsonArray) {
-            super.onPostExecute(jsonArray);
+        protected void onPostExecute(String result) {
+            super.onPostExecute(result);
         }
     }
+
+//    private class DetectTopics extends AsyncTask<String[], Void, JSONArray> {
+//
+//
+//        @Override
+//        protected JSONArray doInBackground(String[]... strings) {
+//            MonkeyLearn ml = new MonkeyLearn("d1244a0d6b9245527414635c362a306f08629e6b");
+//            String moduleId = "cl_WdTKtSjm";
+//            String[] textList = {"This is a text to test your classifier", "This is some more text"};
+//            MonkeyLearnResponse res = null;
+//            try {
+//                res = ml.classifiers.classify(moduleId, textList, true);
+//            } catch (MonkeyLearnException e) {
+//                e.printStackTrace();
+//            }
+//            Log.i("Result", res.arrayResult.toJSONString());
+//            return null;
+//        }
+//
+//        @Override
+//        protected void onPostExecute(JSONArray jsonArray) {
+//            super.onPostExecute(jsonArray);
+//        }
+//    }
 
 }

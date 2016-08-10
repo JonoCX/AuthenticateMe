@@ -21,6 +21,7 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 import com.monkeylearn.MonkeyLearn;
+import com.monkeylearn.MonkeyLearnException;
 import com.twitter.sdk.android.Twitter;
 import com.twitter.sdk.android.core.TwitterSession;
 import com.twitter.sdk.android.core.models.Tweet;
@@ -66,59 +67,22 @@ public class LandingActivity extends AppCompatActivity {
             fToken = preferences.getString("fb_access_token", null);
             fID = preferences.getString("user_id", null);
             handleFB();
+            processFeed();
         }
-        //processFeed();
     }
 
     private void processFeed() {
         TopicDetection detection = new TopicDetection(getResources().getString(R.string.monkey_learn_api_key));
         Log.i("Feed", feed.toString());
         String[] arr = feed.toArray(new String[0]);
-        org.json.simple.JSONArray result = detection.detectTopics(arr);
+        String result = "";
+        try {
+            result = detection.detectTopics(arr);
+        } catch (MonkeyLearnException e) {
+            e.printStackTrace();
+        }
 
-        Log.i("result", result.toJSONString());
-    }
-
-    private boolean checkIfUserExists() {
-        DatabaseReference mDatabase = FirebaseDatabase.getInstance().getReference("users");
-
-        //mDatabase.child("users").child("1").setValue(user);
-        mDatabase.child("users").child("1");
-
-        mDatabase.child("users").child("1").addListenerForSingleValueEvent(
-                new ValueEventListener() {
-                    @Override
-                    public void onDataChange(DataSnapshot dataSnapshot) {
-                        for (DataSnapshot child : dataSnapshot.getChildren()) {
-                            Log.i("it", child.toString());
-                        }
-                    }
-
-                    @Override
-                    public void onCancelled(DatabaseError databaseError) {
-                        Log.w("Cancelled", "getUser:onCanceeled", databaseError.toException());
-                    }
-                }
-        );
-        return false;
-    }
-
-    private void databaseTesting() {
-        FirebaseDatabase database = FirebaseDatabase.getInstance();
-        DatabaseReference ref = database.getReference("message");
-        ref.setValue("Hello, World!");
-        ref.addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-                String value = dataSnapshot.getValue(String.class);
-                Log.d("Firebase: Data Change", "Value is: " + value);
-            }
-
-            @Override
-            public void onCancelled(DatabaseError databaseError) {
-                Log.w("Firebase: Failure", "Failed to read value.", databaseError.toException());
-            }
-        });
+        Log.i("result", result);
     }
 
     private void handleFB() {
