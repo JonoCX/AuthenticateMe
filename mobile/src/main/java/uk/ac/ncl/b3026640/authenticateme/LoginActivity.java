@@ -68,9 +68,6 @@ import io.fabric.sdk.android.Fabric;
 
 public class LoginActivity extends AppCompatActivity {
 
-    // Note: Your consumer key and secret should be obfuscated in your source code before shipping.
-    private static final String TWITTER_KEY = "jXi3FFWRBEFQp9jDXUH5vTZJ2";
-    private static final String TWITTER_SECRET = "6ImY6NYymYOY8F3p5iAWwYWwXQMmSb00oTg8sm7Fv0dex8VFSr";
 
     private String twitterKey;
     private String twitterSecret;
@@ -84,16 +81,15 @@ public class LoginActivity extends AppCompatActivity {
 
     JSONObject fFeed = new JSONObject();
 
-
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
 
-
+        twitterKey = getResources().getString(R.string.twitter_api_key);
+        twitterSecret = getResources().getString(R.string.twitter_api_secret);
         // Twitter
-        TwitterAuthConfig authConfig = new TwitterAuthConfig(TWITTER_KEY, TWITTER_SECRET);
+        TwitterAuthConfig authConfig = new TwitterAuthConfig(twitterKey, twitterSecret);
         Fabric.with(this, new Twitter(authConfig));
 
         // Facebook

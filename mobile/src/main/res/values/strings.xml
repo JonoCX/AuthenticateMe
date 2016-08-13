@@ -3,4 +3,6 @@
     <string name="twitter_login_failure">Login Failed</string>
     <string name="facebook_app_id">1751771895108816</string>
     <string name="monkey_learn_api_key">d1244a0d6b9245527414635c362a306f08629e6b</string>
+    <string name="twitter_api_key">jXi3FFWRBEFQp9jDXUH5vTZJ2</string>
+    <string name="twitter_api_secret">6ImY6NYymYOY8F3p5iAWwYWwXQMmSb00oTg8sm7Fv0dex8VFSr</string>
 </resources>

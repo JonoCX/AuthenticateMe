@@ -17,8 +17,6 @@ import android.widget.Button;
 import com.facebook.AccessToken;
 import com.facebook.GraphRequest;
 import com.facebook.GraphResponse;
-import com.monkeylearn.MonkeyLearn;
-import com.monkeylearn.MonkeyLearnException;
 import com.twitter.sdk.android.Twitter;
 import com.twitter.sdk.android.core.TwitterSession;
 import com.twitter.sdk.android.core.models.Tweet;
@@ -26,9 +24,11 @@ import com.twitter.sdk.android.core.models.Tweet;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
 
 import java.util.ArrayList;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
 import uk.ac.ncl.b3026640.authenticateme.misc.TopicDetection;
@@ -86,10 +86,9 @@ public class LandingActivity extends AppCompatActivity {
         TopicDetection detection = new TopicDetection(getResources().getString(R.string.monkey_learn_api_key));
         Log.i("Feed", feed.toString());
         String[] arr = feed.toArray(new String[0]);
-        String result = "";
+        Map<String, org.json.simple.JSONArray> result;
         result = detection.detectTopics(arr);
-
-        Log.i("result", result);
+        Log.i("result", String.valueOf(result));
     }
 
     private void handleFB() {

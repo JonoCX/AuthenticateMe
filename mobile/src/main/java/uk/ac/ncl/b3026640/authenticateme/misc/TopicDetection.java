@@ -3,25 +3,25 @@ package uk.ac.ncl.b3026640.authenticateme.misc;
 import android.os.AsyncTask;
 import android.util.Log;
 
-import com.monkeylearn.MonkeyLearn;
-import com.monkeylearn.MonkeyLearnException;
-import com.monkeylearn.MonkeyLearnResponse;
-
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
-import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.LinkedList;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
+import java.util.Map;
 
 import javax.net.ssl.HttpsURLConnection;
-
-import uk.ac.ncl.b3026640.authenticateme.R;
 
 /**
  * Given a social media text feed this class will
@@ -46,29 +46,68 @@ public class TopicDetection {
     }
 
     /**
-     * Takes an array of strings and detects their topics using
-     * the monkey learn api.
-     *
-     * @param textList array of text strings to be classified
-     * @return the result of the api call or null
+     * From the parameter, query the Monkey Learn classification
+     * server to find out the topic for each member of the parameter
+     * array.
+     * @param textList  Array of Strings that are sourced from the users social media
+     *                  account
+     * @return          A map of the original String and a JSON array of the potential
+     *                  topics.
      */
-    public String detectTopics(String[] textList) {
-        String response = "";
+    public Map<String, JSONArray> detectTopics(String[] textList) {
+        Map<String, JSONArray> response = new HashMap<>();
         try {
             response = new SendPost().execute(Arrays.asList(textList)).get();
-            Log.i("response", response);
+            Log.i("response", String.valueOf(response));
+
+            for (Map.Entry<String, JSONArray> m: response.entrySet()) {
+                Log.i("E_STRING", m.getKey());
+                JSONArray inner = m.getValue();
+
+                for (int i = 0; i < inner.size(); i++) {
+                    JSONObject obj = (JSONObject) inner.get(i);
+                }
+            }
+
         } catch (Exception e) {
             e.printStackTrace();
         }
         return response;
     }
 
+    /**
+     *
+     * @param map
+     * @return
+     */
+    public Map<String, Integer> mostFrequentTopics(Map<String, JSONArray> map) {
+        Map<String, Integer> result = new HashMap<>();
+
+        for (Map.Entry<String, JSONArray> m: map.entrySet()) {
+            String currentKey = m.getKey();
+            JSONArray arr = m.getValue();
+            for (int i = 0; i < arr.size(); i++) {
+                JSONObject obj = (JSONObject) arr.get(i);
+                String label = (String) obj.get("label");
+                // words.computeIfPresent("hello", (k, v) -> v + 1);
+                // hashmap.put(key, hashmap.get(key) + 1);
+                if (result.containsKey(label)) {
+                    result.put(label, result.get(label) + 1);
+                }
+                else {
+                    result.put(label, 1);
+                }
+            }
+        }
+        return MapSorter.valueAscending(result);
+    }
 
 
-    private class SendPost extends AsyncTask<List<String>, Void, String> {
+
+    private class SendPost extends AsyncTask<List<String>, Void, Map<String, JSONArray>> {
 
         @Override
-        protected String doInBackground(List<String>... strings) {
+        protected Map<String, JSONArray> doInBackground(List<String>... strings) {
             StringBuilder response = new StringBuilder();
             try {
                 URL url = new URL(MONKEY_LEARN_BASE_URL);
@@ -93,13 +132,11 @@ public class TopicDetection {
                 writer.flush();
                 writer.close();
 
-                Log.i("POST", url.toString());
-                Log.i("Response code", String.valueOf(connection.getResponseCode()));
 
                 // read input stream
                 int code = connection.getResponseCode();
                 BufferedReader input;
-                if (code == 400 || code == 500)
+                if (code >= 400 && code <= 500)
                     input = new BufferedReader(new InputStreamReader(connection.getErrorStream()));
                 else
                     input = new BufferedReader(new InputStreamReader(connection.getInputStream()));
@@ -111,13 +148,42 @@ public class TopicDetection {
             } catch (Exception e) {
                 e.printStackTrace();
             }
-
-            return response.toString();
+            return processResponse(response.toString(), (String[]) strings[0].toArray());
         }
 
         @Override
-        protected void onPostExecute(String result) {
+        protected void onPostExecute(Map<String, JSONArray> result) {
             super.onPostExecute(result);
+        }
+
+        /**
+         * Process the result from the Monkey Learn API to include
+         * the Tweet + the category information into on data object.
+         *
+         * @param response JSON String response from the API
+         * @param feed     Array of Tweets that have been classified
+         * @return Tweet -> classification info
+         */
+        private Map<String, JSONArray> processResponse(String response, String[] feed) {
+            Map<String, JSONArray> result = new HashMap<>();
+
+            try {
+                JSONParser parser = new JSONParser();
+                JSONObject parsedObject = (JSONObject) parser.parse(response);
+
+                // get the json array's of json array's
+                JSONArray resultArr = (JSONArray) parsedObject.get("result");
+
+                for (int i = 0; i < resultArr.size(); i++) {
+                    JSONArray inner = (JSONArray) resultArr.get(i);
+                    result.put(feed[i], inner);
+                }
+
+            } catch (ParseException e) {
+                e.printStackTrace();
+            }
+
+            return result;
         }
     }
 
