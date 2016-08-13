@@ -19,7 +19,7 @@
         <!--android:width = "250dp"-->
         <!--android:height = "150dp"/>-->
     <Button
-        android:id="@+id/angry_btn"
+        android:id="@+id/auth_btn"
         android:text="@string/app_name"
         android:textColor="#FFFFFF"
         android:textSize="24sp"

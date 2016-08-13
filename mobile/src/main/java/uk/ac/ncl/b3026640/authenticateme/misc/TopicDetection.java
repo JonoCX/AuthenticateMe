@@ -52,7 +52,7 @@ public class TopicDetection {
      * @param textList array of text strings to be classified
      * @return the result of the api call or null
      */
-    public String detectTopics(String[] textList) throws MonkeyLearnException {
+    public String detectTopics(String[] textList) {
         String response = "";
         try {
             response = new SendPost().execute(Arrays.asList(textList)).get();
@@ -121,28 +121,5 @@ public class TopicDetection {
         }
     }
 
-//    private class DetectTopics extends AsyncTask<String[], Void, JSONArray> {
-//
-//
-//        @Override
-//        protected JSONArray doInBackground(String[]... strings) {
-//            MonkeyLearn ml = new MonkeyLearn("d1244a0d6b9245527414635c362a306f08629e6b");
-//            String moduleId = "cl_WdTKtSjm";
-//            String[] textList = {"This is a text to test your classifier", "This is some more text"};
-//            MonkeyLearnResponse res = null;
-//            try {
-//                res = ml.classifiers.classify(moduleId, textList, true);
-//            } catch (MonkeyLearnException e) {
-//                e.printStackTrace();
-//            }
-//            Log.i("Result", res.arrayResult.toJSONString());
-//            return null;
-//        }
-//
-//        @Override
-//        protected void onPostExecute(JSONArray jsonArray) {
-//            super.onPostExecute(jsonArray);
-//        }
-//    }
 
 }

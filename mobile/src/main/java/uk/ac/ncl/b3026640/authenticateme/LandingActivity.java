@@ -11,15 +11,12 @@ import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.view.View;
+import android.widget.Button;
 
 import com.facebook.AccessToken;
 import com.facebook.GraphRequest;
 import com.facebook.GraphResponse;
-import com.google.firebase.database.DataSnapshot;
-import com.google.firebase.database.DatabaseError;
-import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.ValueEventListener;
 import com.monkeylearn.MonkeyLearn;
 import com.monkeylearn.MonkeyLearnException;
 import com.twitter.sdk.android.Twitter;
@@ -51,6 +48,8 @@ public class LandingActivity extends AppCompatActivity {
 
     private ArrayList<String> feed = new ArrayList<>();
 
+    private Button authBtn;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -69,6 +68,18 @@ public class LandingActivity extends AppCompatActivity {
             handleFB();
             processFeed();
         }
+
+        authBtn = (Button) findViewById(R.id.auth_btn);
+        authBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                btnClick(view);
+            }
+        });
+    }
+
+    private void btnClick(View view) {
+        // TODO
     }
 
     private void processFeed() {
@@ -76,11 +87,7 @@ public class LandingActivity extends AppCompatActivity {
         Log.i("Feed", feed.toString());
         String[] arr = feed.toArray(new String[0]);
         String result = "";
-        try {
-            result = detection.detectTopics(arr);
-        } catch (MonkeyLearnException e) {
-            e.printStackTrace();
-        }
+        result = detection.detectTopics(arr);
 
         Log.i("result", result);
     }
