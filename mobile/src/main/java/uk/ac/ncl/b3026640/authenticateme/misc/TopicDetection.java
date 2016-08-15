@@ -58,17 +58,6 @@ public class TopicDetection {
         Map<String, JSONArray> response = new HashMap<>();
         try {
             response = new SendPost().execute(Arrays.asList(textList)).get();
-            Log.i("response", String.valueOf(response));
-
-            for (Map.Entry<String, JSONArray> m: response.entrySet()) {
-                Log.i("E_STRING", m.getKey());
-                JSONArray inner = m.getValue();
-
-                for (int i = 0; i < inner.size(); i++) {
-                    JSONObject obj = (JSONObject) inner.get(i);
-                }
-            }
-
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -89,8 +78,6 @@ public class TopicDetection {
             for (int i = 0; i < arr.size(); i++) {
                 JSONObject obj = (JSONObject) arr.get(i);
                 String label = (String) obj.get("label");
-                // words.computeIfPresent("hello", (k, v) -> v + 1);
-                // hashmap.put(key, hashmap.get(key) + 1);
                 if (result.containsKey(label)) {
                     result.put(label, result.get(label) + 1);
                 }
