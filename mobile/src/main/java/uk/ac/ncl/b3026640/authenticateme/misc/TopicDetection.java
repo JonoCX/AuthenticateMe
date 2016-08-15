@@ -13,11 +13,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.net.URL;
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
@@ -36,8 +32,6 @@ import javax.net.ssl.HttpsURLConnection;
 public class TopicDetection {
 
     private static final String MONKEY_LEARN_BASE_URL = "https://api.monkeylearn.com/v2/classifiers/cl_5icAVzKR/classify/";
-    private static final String MONKEY_LEARN_TRAIN_URL = "https://api.monkeylearn.com/v2/classifiers/cl_WdTKtSjm/train/";
-
 
     String apiKey;
 
@@ -73,7 +67,6 @@ public class TopicDetection {
         Map<String, Integer> result = new HashMap<>();
 
         for (Map.Entry<String, JSONArray> m: map.entrySet()) {
-            String currentKey = m.getKey();
             JSONArray arr = m.getValue();
             for (int i = 0; i < arr.size(); i++) {
                 JSONObject obj = (JSONObject) arr.get(i);
@@ -86,7 +79,7 @@ public class TopicDetection {
                 }
             }
         }
-        return MapSorter.valueAscending(result);
+        return MapSorter.valueDescending(result);
     }
 
 

@@ -24,13 +24,12 @@ import com.twitter.sdk.android.core.models.Tweet;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.json.simple.parser.JSONParser;
-import org.json.simple.parser.ParseException;
 
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
+import uk.ac.ncl.b3026640.authenticateme.misc.DBHandler;
 import uk.ac.ncl.b3026640.authenticateme.misc.TopicDetection;
 
 
@@ -38,6 +37,7 @@ public class LandingActivity extends AppCompatActivity {
 
     private TwitterSession twitterSession;
     private SharedPreferences preferences;
+    private DBHandler dbHandler;
 
     private ArrayList<Tweet> tweets = new ArrayList<>();
     private String tUsername;
@@ -59,14 +59,28 @@ public class LandingActivity extends AppCompatActivity {
             twitterSession = Twitter.getSessionManager().getActiveSession();
             tUsername = twitterSession.getUserName();
             tID = twitterSession.getUserId();
-            feed = getIntent().getStringArrayListExtra("twitter_feed");
-            processFeed();
+            dbHandler = new DBHandler(this);
+            if (dbHandler.ifExists(tID)) {
+                feed = getIntent().getStringArrayListExtra("twitter_feed");
+                processFeed();
+            } else {
+                dbHandler.insert(tID, "twitter");
+                feed = getIntent().getStringArrayListExtra("twitter_feed");
+                processFeed();
+            }
         } else {
             preferences = PreferenceManager.getDefaultSharedPreferences(this);
             fToken = preferences.getString("fb_access_token", null);
-            fID = preferences.getString("user_id", null);
-            handleFB();
-            processFeed();
+            fID = preferences.getString("fb_user_id", null);
+            dbHandler = new DBHandler(this);
+            if (dbHandler.ifExists(Long.valueOf(fID))) {
+                handleFB();
+                processFeed();
+            } else {
+                dbHandler.insert(Long.valueOf(fID), "facebook");
+                handleFB();
+                processFeed();
+            }
         }
 
         authBtn = (Button) findViewById(R.id.auth_btn);
@@ -88,6 +102,8 @@ public class LandingActivity extends AppCompatActivity {
         String[] arr = feed.toArray(new String[0]);
         Map<String, org.json.simple.JSONArray> result;
         result = detection.detectTopics(arr);
+        Map<String, Integer> freq = detection.mostFrequentTopics(result);
+        Log.i("sorted Result", String.valueOf(freq));
         Log.i("result", String.valueOf(result));
     }
 

@@ -33,6 +33,7 @@ import com.facebook.login.LoginManager;
 import com.facebook.login.LoginResult;
 import com.facebook.login.widget.LoginButton;
 
+import com.facebook.stetho.Stetho;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -65,6 +66,7 @@ import java.util.List;
 
 
 import io.fabric.sdk.android.Fabric;
+import uk.ac.ncl.b3026640.authenticateme.misc.DBHandler;
 
 public class LoginActivity extends AppCompatActivity {
 
@@ -85,6 +87,7 @@ public class LoginActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        Stetho.initializeWithDefaults(this);
 
         twitterKey = getResources().getString(R.string.twitter_api_key);
         twitterSecret = getResources().getString(R.string.twitter_api_secret);
@@ -128,22 +131,6 @@ public class LoginActivity extends AppCompatActivity {
             }
 
         });
-
-
-
-        // Add code to print out the key hash
-        /*try {
-            PackageInfo info = getPackageManager().getPackageInfo(
-                    "uk.ac.ncl.b3026640.authenticateme",
-                    PackageManager.GET_SIGNATURES);
-            for (Signature signature : info.signatures) {
-                MessageDigest md = MessageDigest.getInstance("SHA");
-                md.update(signature.toByteArray());
-                Log.d("KeyHash:", Base64.encodeToString(md.digest(), Base64.DEFAULT));
-            }
-        } catch (PackageManager.NameNotFoundException | NoSuchAlgorithmException e) {
-            e.printStackTrace();
-        }*/
     }
 
     public boolean isLoggedIn() {
@@ -177,6 +164,7 @@ public class LoginActivity extends AppCompatActivity {
                 editor.putString("fb_access_token", loginResult.getAccessToken().getToken());
                 editor.putLong("fb_access_expires", loginResult.getAccessToken().getExpires().getTime());
                 intent.putExtra("access_token", loginResult.getAccessToken());
+                Log.i("FB_USER_ID", loginResult.getAccessToken().getUserId());
                 intent.putExtra("fb_user_id", loginResult.getAccessToken().getUserId());
                 editor.apply();
                 startActivity(intent);
