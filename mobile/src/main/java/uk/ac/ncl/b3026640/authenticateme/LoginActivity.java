@@ -2,37 +2,20 @@ package uk.ac.ncl.b3026640.authenticateme;
 
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.content.pm.PackageInfo;
-import android.content.pm.PackageManager;
-import android.content.pm.Signature;
-import android.os.AsyncTask;
+import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
-import android.util.Base64;
 import android.util.Log;
-import android.widget.TextView;
 import android.widget.Toast;
 
-import io.fabric.sdk.android.Fabric;
-
-import com.crashlytics.android.answers.Answers;
-import com.crashlytics.android.answers.LoginEvent;
-import com.facebook.AccessToken;
 import com.facebook.AccessTokenTracker;
 import com.facebook.CallbackManager;
 import com.facebook.FacebookCallback;
 import com.facebook.FacebookException;
 import com.facebook.FacebookSdk;
-import com.facebook.GraphRequest;
-import com.facebook.GraphResponse;
-import com.facebook.Profile;
-import com.facebook.ProfileTracker;
 import com.facebook.appevents.AppEventsLogger;
-import com.facebook.login.LoginManager;
 import com.facebook.login.LoginResult;
 import com.facebook.login.widget.LoginButton;
-
 import com.facebook.stetho.Stetho;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -42,31 +25,20 @@ import com.google.firebase.database.ValueEventListener;
 import com.twitter.sdk.android.Twitter;
 import com.twitter.sdk.android.core.Callback;
 import com.twitter.sdk.android.core.Result;
-import com.twitter.sdk.android.core.TwitterCore;
 import com.twitter.sdk.android.core.TwitterAuthConfig;
-import com.crashlytics.android.Crashlytics;
+import com.twitter.sdk.android.core.TwitterCore;
 import com.twitter.sdk.android.core.TwitterException;
 import com.twitter.sdk.android.core.TwitterSession;
 import com.twitter.sdk.android.core.identity.TwitterLoginButton;
 import com.twitter.sdk.android.core.models.Tweet;
-import com.twitter.sdk.android.core.models.User;
 
-
-import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-
 import io.fabric.sdk.android.Fabric;
-import uk.ac.ncl.b3026640.authenticateme.misc.DBHandler;
 
 public class LoginActivity extends AppCompatActivity {
 
@@ -97,9 +69,6 @@ public class LoginActivity extends AppCompatActivity {
 
         // Facebook
         FacebookSdk.sdkInitialize(getApplicationContext());
-        if (isLoggedIn()) {
-            LoginManager.getInstance().logOut();
-        }
         AppEventsLogger.activateApp(this);
         callbackManager = CallbackManager.Factory.create();
 
@@ -113,7 +82,7 @@ public class LoginActivity extends AppCompatActivity {
         FirebaseDatabase database = FirebaseDatabase.getInstance();
         DatabaseReference myRef = database.getReference("message");
 
-        myRef.setValue("Hello, World!");
+        myRef.setValue("Hello, Firebase!");
         // Read from the database
         myRef.addValueEventListener(new ValueEventListener() {
             @Override
@@ -133,10 +102,6 @@ public class LoginActivity extends AppCompatActivity {
         });
     }
 
-    public boolean isLoggedIn() {
-        AccessToken accessToken = AccessToken.getCurrentAccessToken();
-        return accessToken != null;
-    }
 
     private void setupViews() {
         setupTwitterLogin();
@@ -153,6 +118,7 @@ public class LoginActivity extends AppCompatActivity {
         fLoginBtn = (LoginButton) findViewById(R.id.login_button);
         fLoginBtn.setReadPermissions(Arrays.asList("email", "user_posts"));
 
+
         fLoginBtn.registerCallback(callbackManager, new FacebookCallback<LoginResult>() {
 
             private AccessTokenTracker mAccessTokenTracker;
@@ -165,6 +131,7 @@ public class LoginActivity extends AppCompatActivity {
                 editor.putLong("fb_access_expires", loginResult.getAccessToken().getExpires().getTime());
                 intent.putExtra("access_token", loginResult.getAccessToken());
                 Log.i("FB_USER_ID", loginResult.getAccessToken().getUserId());
+                //intent.putExtra("fb_user_id", loginResult.getAccessToken().getUserId());
                 intent.putExtra("fb_user_id", loginResult.getAccessToken().getUserId());
                 editor.apply();
                 startActivity(intent);

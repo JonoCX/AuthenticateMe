@@ -12,11 +12,14 @@ import android.preference.PreferenceManager;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
+import android.webkit.CookieManager;
+import android.webkit.CookieSyncManager;
 import android.widget.Button;
 
 import com.facebook.AccessToken;
 import com.facebook.GraphRequest;
 import com.facebook.GraphResponse;
+import com.facebook.login.LoginManager;
 import com.twitter.sdk.android.Twitter;
 import com.twitter.sdk.android.core.TwitterSession;
 import com.twitter.sdk.android.core.models.Tweet;
@@ -49,6 +52,7 @@ public class LandingActivity extends AppCompatActivity {
     private ArrayList<String> feed = new ArrayList<>();
 
     private Button authBtn;
+    private Button logoutBtn;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -71,15 +75,15 @@ public class LandingActivity extends AppCompatActivity {
         } else {
             preferences = PreferenceManager.getDefaultSharedPreferences(this);
             fToken = preferences.getString("fb_access_token", null);
-            fID = preferences.getString("fb_user_id", null);
+            fID = getIntent().getStringExtra("fb_user_id");
             dbHandler = new DBHandler(this);
             if (dbHandler.ifExists(Long.valueOf(fID))) {
                 handleFB();
-                processFeed();
+                //processFeed();
             } else {
                 dbHandler.insert(Long.valueOf(fID), "facebook");
                 handleFB();
-                processFeed();
+                //processFeed();
             }
         }
 
@@ -87,13 +91,35 @@ public class LandingActivity extends AppCompatActivity {
         authBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                btnClick(view);
+                authBtnClick(view);
+            }
+        });
+        logoutBtn = (Button) findViewById(R.id.logout_btn);
+        logoutBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                logoutBtnClick(view);
             }
         });
     }
 
-    private void btnClick(View view) {
+    private void authBtnClick(View view) {
         // TODO
+    }
+
+    private void logoutBtnClick(View view) {
+        Intent intent = new Intent(this, LoginActivity.class);
+        if (getIntent().hasExtra("login_method")) {
+            CookieSyncManager.createInstance(this);
+            CookieManager manager = CookieManager.getInstance();
+            manager.removeSessionCookie();
+            Twitter.getSessionManager().clearActiveSession();
+            Twitter.logOut();
+            startActivity(intent);
+        } else {
+            LoginManager.getInstance().logOut();
+            startActivity(intent);
+        }
     }
 
     private void processFeed() {
